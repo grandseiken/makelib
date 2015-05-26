@@ -29,6 +29,9 @@
 .PHONY: default
 default: all
 
+# Ensure target directory exists (use as first line of recipe).
+MKDIR=mkdir -p $(@D)
+
 # Utility targets.
 add:
 	git add $(ALL_FILES)
@@ -58,7 +61,8 @@ endif
 # Object files. References dependencies -- e.g. libraries that must be built
 # before their header files are available -- in CC_OBJECT_FILE_PREREQS.
 $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
-  $(OUTDIR_TMP)/%.build $(OUTDIR_TMP)/%.mkdir $(CC_OBJECT_FILE_PREREQS)
+  $(OUTDIR_TMP)/%.build $(CC_OBJECT_FILE_PREREQS)
+	$(MKDIR)
 	SOURCE_FILE=$(subst $(OUTDIR_TMP)/,,./$(<:.build=)); \
 	    echo Compiling $$SOURCE_FILE; \
 	    $(CXX) -c $(CFLAGS) $(if $(findstring /$(GENDIR)/,$@),,$(WFLAGS)) \
@@ -71,10 +75,11 @@ $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
 # default causes everything to be generated.
 .SECONDEXPANSION:
 $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
-  $(OUTDIR_TMP)/%.build $(OUTDIR_TMP)/%.mkdir $(CC_GENERATED_FILES) \
+  $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES) \
   $$(subst \
   $$(OUTDIR_TMP)/,,$$($$(subst .,_,$$(subst /,_,$$(subst \
   $$(OUTDIR_TMP)/,,./$$(@:.deps=))))_LINK:.o=))
+	$(MKDIR)
 	SOURCE_FILE=$(subst $(OUTDIR_TMP)/,,./$(@:.deps=)); \
 	    echo Generating dependencies for $$SOURCE_FILE; \
 	    $(CXX) $(CFLAGS) -o $@ -MM $$SOURCE_FILE && \
@@ -83,12 +88,6 @@ $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
 
 # Dependency on source files.
 .PRECIOUS: $(OUTDIR_TMP)/%.build
-$(OUTDIR_TMP)/%.build: \
-  ./% $(OUTDIR_TMP)/%.mkdir
-	touch $@
-
-# Ensure a directory exists.
-.PRECIOUS: ./%.mkdir
-./%.mkdir:
-	mkdir -p $(dir $@)
+$(OUTDIR_TMP)/%.build: ./%
+	$(MKDIR)
 	touch $@
