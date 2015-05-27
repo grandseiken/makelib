@@ -83,8 +83,10 @@ else
   endif
 endif
 
-# Gives the object file for each source file.
-src_to_o=$(addprefix $(OUTDIR_TMP)/,$(addsuffix .o,$1))
+# Converts between source files and build artifact paths.
+src_to_artifact=$(addprefix $(OUTDIR_TMP)/,$(addsuffix $1,$2))
+artifact_to_src=$(subst $(OUTDIR_TMP)/,,./$(basename $1))
+src_to_o=$(call src_to_artifact,.o,$1)
 
 # Directories.
 OUTDIR_TMP=$(OUTDIR)/build
@@ -92,8 +94,7 @@ OUTDIR_TMP=$(OUTDIR)/build
 # Calculated filesets.
 .PRECIOUS: $(CC_GENERATED_FILES)
 CC_ALL_FILES=$(CC_SOURCE_FILES) $(CC_GENERATED_FILES)
-CC_DEP_FILES=\
-  $(addprefix $(OUTDIR_TMP)/,$(addsuffix .deps,$(CC_ALL_FILES)))
+CC_DEP_FILES=$(call src_to_artifact,.deps,$(CC_ALL_FILES))
 CC_OBJECT_FILES=$(call src_to_o,$(CC_ALL_FILES))
 
 # Recursively include dependency analysis outputs.
@@ -106,7 +107,7 @@ endif
 $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
   $(OUTDIR_TMP)/%.build $(CC_OBJECT_FILE_PREREQS)
 	$(MKDIR)
-	SOURCE_FILE=$(subst $(OUTDIR_TMP)/,,./$(<:.build=)); \
+	SOURCE_FILE=$(call artifact_to_src,$@); \
 	    echo Compiling $$SOURCE_FILE; \
 	    $(CXX) -c $(CFLAGS) $(CFLAGS_EXTRA) \
 	    $(if $(findstring /$(GENDIR)/,$@),,$(WFLAGS)) -o $@ $$SOURCE_FILE
@@ -121,7 +122,7 @@ $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
 $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
   $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES)
 	$(MKDIR)
-	SOURCE_FILE=$(subst $(OUTDIR_TMP)/,,./$(@:.deps=)); \
+	SOURCE_FILE=$(call artifact_to_src,$@); \
 	    echo Generating dependencies for $$SOURCE_FILE; \
 	    $(CXX) $(CFLAGS) $(CFLAGS_EXTRA) -o $@ -MM $$SOURCE_FILE && \
 	    sed -i -e 's/.*\.o:/$(subst /,\/,$<)::/g' $@
