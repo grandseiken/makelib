@@ -116,13 +116,10 @@ $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
 # forces regeneration via the rules provided. Deps rule depends on same .build
 # target it generates. When the specific .build target doesn't exist, the
 # default causes everything to be generated.
-# TODO: I've forgotten what the last prerequisite does. Is it obsolete?
+# TODO: also generate link dependencies as best as possible.
 .SECONDEXPANSION:
 $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
-  $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES) \
-  $$(subst \
-  $$(OUTDIR_TMP)/,,$$($$(subst .,_,$$(subst /,_,$$(subst \
-  $$(OUTDIR_TMP)/,,./$$(@:.deps=))))_LINK:.o=))
+  $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES)
 	$(MKDIR)
 	SOURCE_FILE=$(subst $(OUTDIR_TMP)/,,./$(@:.deps=)); \
 	    echo Generating dependencies for $$SOURCE_FILE; \
@@ -130,7 +127,8 @@ $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
 	    sed -i -e 's/.*\.o:/$(subst /,\/,$<)::/g' $@
 	echo "	@touch" $< >> $@
 
-# Dependency on source files.
+# Dependency on source files (default target; overridden by dependency
+# generation).
 .PRECIOUS: $(OUTDIR_TMP)/%.build
 $(OUTDIR_TMP)/%.build: ./%
 	$(MKDIR)
