@@ -16,6 +16,9 @@
 #   CC_GENERATED_FILES:
 #     generated C++ source files; prerequisites for calculating C++ header
 #     inclusion dependency graph.
+#  H_GENERATED_FILES:
+#     generated C++ include files; prerequisites for calculating C++ header
+#     inclusion dependency graph.
 #
 # ==== Prerequisites ====
 #   CC_OBJECT_FILE_PREREQS: prerequisites for compiling C++ source files.
@@ -120,7 +123,7 @@ $(CC_OBJECT_FILES): $(OUTDIR_TMP)/%.o: \
 # TODO: also generate link dependencies as best as possible.
 .SECONDEXPANSION:
 $(CC_DEP_FILES): $(OUTDIR_TMP)/%.deps: \
-  $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES)
+  $(OUTDIR_TMP)/%.build $(CC_GENERATED_FILES) $(H_GENERATED_FILES)
 	$(MKDIR)
 	SOURCE_FILE=$(call artifact_to_src,$@); \
 	    echo Generating dependencies for $$SOURCE_FILE; \
